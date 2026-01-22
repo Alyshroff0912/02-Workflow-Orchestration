@@ -1,0 +1,48 @@
+id: 01_hello_world
+namespace: zoomcamp
+
+inputs:
+  - id: name #once it is saaved, it cannot be changed
+    type: STRING
+    defaults: Will
+
+concurrency:
+  behavior: FAIL
+  limit: 2 #only have 2 workflow run at the same time
+
+variables:
+  welcome_message: "Hello, {{ inputs.name }}!"
+  
+tasks:
+  - id: hello_message
+    type: io.kestra.plugin.core.log.Log #sent messgae to log
+    message: "{{ render(vars.welcome_message) }}" #use the variable defined above, and show this whold thing
+  
+  - id: generate_output
+    type: io.kestra.plugin.core.debug.Return #generate an output
+    format: I was generated during this workflow.
+
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep #pause the workflow for a 15s
+    duration: PT15S
+
+  - id: log_output
+    type: io.kestra.plugin.core.log.Log
+    message: "This is an output: {{ outputs.generate_output.value }}"
+
+  - id: goodbye_message
+    type: io.kestra.plugin.core.log.Log
+    message: "Goodbye, {{ inputs.name }}!"
+
+pluginDefaults:
+  - type: io.kestra.plugin.core.log.Log
+    values:
+      level: ERROR #dont have to reenter info, it will be used as default
+
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 10 * * *"
+    inputs:
+      name: Sarah
+    disabled: true
